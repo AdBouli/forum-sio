@@ -1,4 +1,15 @@
+Forum SIO
+=========
+
+Pré-requis:
+-----------
+* PHP 5.5
+* MySQL-Server 5.6
+* Apache2
+
+
 Base de données:
+----------------
 
 Les paramètres de connexion à la base de données sont modifiables dans 'conf/database.conf'.
 
