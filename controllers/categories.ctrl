@@ -1,0 +1,139 @@
+<?php
+require_once(CORE.'controller.php');
+
+class Categories extends Controller{
+
+	function __construct(){
+		$this->layout = 'admin';
+		$this->loadModel(get_class($this));
+	}
+
+	function index(){
+		$data = array();
+		$rows = $this->models[get_class($this)]->selectAll();
+		$data['admin'] = [
+			'rows' => $rows
+		];
+		$this->set($data);
+		$this->render('index');
+	}
+
+	function read($id){
+		$data = array();
+		$this->loadModel(get_class($this), $id);
+		//récupération des données
+		$data['reader']['id'] = $this->models[get_class($this)]->getid();
+		$data['reader']['nom'] = $this->models[get_class($this)]->getnom();
+		$data['reader']['description'] = $this->models[get_class($this)]->getdescription();
+		$data['reader']['classement'] = $this->models[get_class($this)]->getclassement();
+		//si il existe une catégorie parent
+		$categ_id = $this->models[get_class($this)]->getcategorie_id();
+		if($categ_id != 0  && $categ_id != null){
+			$data['reader']['id_categorie_parent'] = $this->models[get_class($this)]->links[get_class($this)]->getid();
+			$data['reader']['nom_categorie_parent'] = $this->models[get_class($this)]->links[get_class($this)]->getnom();
+		}
+		//
+		$this->set($data);
+		$this->render('read');
+	}
+
+	function create(){
+		$data = array();
+		if(!empty($_POST)){
+			//setting des datas
+			foreach ($_POST as $key => $value) {
+				$setter = 'set'.$key;
+				$this->models[get_class($this)]->$setter($value);
+			}
+			//refus si nom && catégorie parent existe
+			if($this->models[get_class($this)]->checkNomExist()){
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "La catégorie '".$this->models[get_class($this)]->getnom()."' existe déjà dans cette catégorie.";
+			}else{
+				//creation
+				$result = $this->models[get_class($this)]->create();
+				if($result==1){
+					$data['css'] = ".msg{color:green;}";
+					$data['msg'] = "La catégorie '".$this->models[get_class($this)]->getnom()."' a bien été créée.";
+				}else{
+					//echec
+					$data['css'] = ".msg{color:red;}";
+					$data['msg'] = "Erreur dans la création de la catégorie.";
+				}
+			}
+		}
+		//liste selection de catégorie parent
+		$data['create']['select_categorie'] = $this->models[get_class($this)]->listAll();
+		//
+		$this->set($data);
+		$this->render('create');
+	}
+
+	function update($id){
+		$data = array();
+		$this->loadModel(get_class($this), $id);
+		if(empty($_POST)){
+			//datas remplissage inputs
+			$data['updater']['id'] = $this->models[get_class($this)]->getid();
+			$data['updater']['nom'] = $this->models[get_class($this)]->getnom();
+			$data['updater']['description'] = $this->models[get_class($this)]->getdescription();
+			$data['updater']['categorie_id'] = $this->models[get_class($this)]->getcategorie_id();
+			$data['updater']['classement'] = $this->models[get_class($this)]->getclassement();
+			//liste des catégories pour la selection parente
+			$data['updater']['select_categorie'] = $this->models[get_class($this)]->listAll();
+		}else{
+			//setting des datas
+			foreach ($_POST as $key => $value) {
+				$setter = 'set'.$key;
+				$this->models[get_class($this)]->$setter($value);
+			}
+			//refus si nom && catégorie parent existe
+			if($this->models[get_class($this)]->checkNomExist()){
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "La catégorie '".$this->models[get_class($this)]->getnom()."' existe déjà dans cette catégorie.";
+			}else{
+				//modification
+				$result = $this->models[get_class($this)]->update();
+				if($result==1){
+					$data['css'] = ".msg{color:green;}";
+					$data['msg'] = "La catégorie '".$this->models[get_class($this)]->getnom()."' a bien été modifié.";
+				}else{
+					//si echec
+					$data['css'] = ".msg{color:red;}";
+					$data['msg'] = "Erreur dans la modification de la catégorie.";
+				}
+			}
+		}
+		//
+		$this->set($data);
+		$this->render('update');
+
+	}
+
+	function delete($id){
+		$data = array();
+		$this->loadModel(get_class($this), $id);
+		if(empty($_POST)){
+			$data['deleter']['id'] = $this->models[get_class($this)]->getid();
+			$data['deleter']['nom'] = $this->models[get_class($this)]->getnom();
+		}else{
+			//suppression
+			$result = $this->models[get_class($this)]->delete();
+			if($result==1){
+				$data['css'] = ".msg{color:green;}";
+				$data['msg'] = "La catégorie '".$this->models[get_class($this)]->getnom()."' a bien été supprimée.";
+			}else{
+				//echec
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "Erreur dans la suppression de la catégorie.";
+			}
+		}
+		//
+		$this->set($data);
+		$this->render('delete');
+	}	
+
+}
+
+
+?>

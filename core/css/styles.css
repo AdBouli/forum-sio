@@ -1,0 +1,287 @@
+/*GENERAL*/
+html{
+	background-attachment:fixed;
+	background-image:linear-gradient(to bottom right, #C8C8D8, #33B);
+	font-family: arial;
+}
+
+a{
+	text-decoration: none !important;
+	color:#008;
+}
+
+@font-face {
+    font-family: "font_home";
+    src: url('../fonts/HACKED.ttf');
+}
+
+#main{
+	display: block;
+	margin-left: 5%;
+	margin-right: 5%;
+}
+
+#box_top{
+	display:block;
+	float:left;
+	width: 100%;
+}
+
+#nav_bar{
+	display:block;
+	width:auto;
+	margin:1%;
+	height: 30px;
+	border-style: outset;
+	border-width: 2px;
+	border-radius: 10px;
+	border-color: #DDD;
+	background-color: rgba(128, 128, 255, 0.1);
+
+}
+
+#nav_bar_home{
+	display: block;
+	float: left;
+	width:20%;
+}
+
+#nav_bar_home_element{
+	display: block;
+	font-family: "font_home";
+	font-size: 25px;
+	letter-spacing: 3px;
+	color:#33B;
+	text-align: center;
+}
+
+#nav_bar_home_element:hover{
+	background-color:black;
+	color:white;
+	border-top-left-radius: 10px;
+	border-bottom-left-radius: 10px;
+}
+
+#nav_bar_home_element:active{
+	border-style: inset;
+	border-width: 2px;
+}
+
+
+#nav_bar_menu{
+	display: block;
+	float: left;
+	width:60%;
+}
+
+#nav_bar_menu_element{
+	display: block;
+	font-family: "font_home";
+	letter-spacing: 3px;
+	float:left;
+	color:#33B;
+}
+
+#nav_bar_menu_element:hover{
+	background-color:black;
+	color:white;
+}
+
+#nav_bar_menu_element:active{
+	border-style: inset;
+	border-width: 2px;
+}
+
+#nav_bar_menu_element_element{
+	display: block;
+	float:left;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+#nav_bar_user{
+	display: block;
+	float: left;
+	width:20%;
+}
+
+#nav_bar_user_element{
+	display: block;
+	margin:5px;
+}
+
+#box_main{
+	display: block;
+	float:left;
+	width:100%;
+}
+
+#box_menu{
+	display: block;
+	float:left;
+	width:20%;
+}
+
+#menu{
+	display: block;
+	margin:5%;
+	padding:10%;
+	width:auto;
+	border-style: outset;
+	border-width: 2px;
+	border-radius: 10px;
+	border-color: #DDD;
+	background-color: rgba(128, 128, 255, 0.1); 
+}
+
+#box_content{
+	display: block;
+	float:left;
+	width:80%;
+}
+
+#content{
+	display: block;
+	float: left;
+	margin:1.66%;
+	padding:3.33%;
+	width:90%;
+	border-style: outset;
+	border-width: 2px;
+	border-radius: 10px;
+	border-color: #DDD;
+	background-color: rgba(255, 255, 255, 0.1); 
+}
+
+#box_flux{
+	display: block;
+	float:left;
+	width:20%;
+}
+
+#flux{
+	display: block;
+	margin:5%;
+	padding:10%;
+	width:auto;
+	border-style: outset;
+	border-width: 2px;
+	border-radius: 10px;
+	border-color: #DDD;
+	background-color: rgba(128, 128, 255, 0.1); 
+}
+
+/*HOME*/
+
+.box_categorie1{
+	display: block;
+	float:left;
+	width:100%;
+}
+
+.categorie1{
+	display: block;
+	float:left;
+	width: 86%;
+	margin-top: 2%;
+	margin-right: 5%;
+	margin-bottom: 0%;
+	margin-left: 5%;
+	border-radius: 10px;
+	padding:2%;
+	border-style: outset;
+	border-width: 2px;
+	border-color: #DDD;
+	background-color: rgba(255, 255, 255, 0.1)
+}
+
+.box_categorie2{
+	display: block;
+	float:left;
+	width:100%;
+}
+
+.categorie2{
+	display: block;
+	float:left;
+	margin-top: 0%;
+	margin-right: 2%;
+	margin-bottom: 0%;
+	margin-left: 2%;
+	padding:1%;
+	width:94%;
+	border-radius:10px;
+	background-image:linear-gradient(rgba(216, 216, 232, 0.1), rgba(255, 128, 0, 0.1));
+}
+
+.box_sujet1{
+	display: block;
+	float:left;
+	width:100%;
+}
+
+.sujet1{
+	display: block;
+	float:left;
+	margin-top: 0%;
+	margin-right: 2%;
+	margin-bottom: 0%;
+	margin-left: 2%;
+	padding:1%;
+	width:94%;
+	border-radius:10px;
+	background-image:linear-gradient(rgba(255, 255, 255, 0.1), rgba(208, 208, 208, 0.1));
+}
+
+.info_categorie1{
+	text-align: right;
+	font-size: 12px;
+	color: #666;
+	margin-bottom: 2px;
+}
+
+.info_categorie2{
+	text-align: right;
+	font-size: 10px;
+	color: #666;
+}
+
+.info_sujet1{
+	text-align: right;
+	font-size: 10px;
+	color: #666;
+}
+
+.box_boutton_repondre{
+	display: block;
+	float: left;
+	width: 100%;
+}
+
+.boutton_repondre{
+	display: block;
+	float: right;
+	margin-top: 2%;
+	margin-right: 5%;
+	margin-bottom: 0%;
+	margin-left: 5%;
+}
+
+.client_create{
+	text-align:right;
+	display:block;
+	margin-right:20%;
+}
+
+.admin_create{
+	text-align:right;
+	display:block;
+	margin-right:40%;
+}
+
+.admin_examples{
+	font-size: 12px;
+	color:#555;
+}

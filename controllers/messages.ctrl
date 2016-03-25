@@ -1,0 +1,140 @@
+<?php
+require_once(CORE.'controller.php');
+
+class Messages extends Controller{
+
+	function __construct(){
+		$this->layout = 'admin';
+		$this->loadModel(get_class($this));
+	}
+
+	function index(){
+		$data = array();
+		$rows = $this->models[get_class($this)]->selectAll();
+		$data['admin'] = [
+			'rows' => $rows
+		];
+		//
+		$this->set($data);
+		$this->render('index');
+	}
+
+	function read($id){
+		$data = array();
+		$this->loadModel(get_class($this), $id);
+		$data['reader']['id'] = $this->models[get_class($this)]->id;
+		$data['reader']['contenu'] = $this->models[get_class($this)]->contenu;
+		//si il existe un sujet
+		$sujet_id = $this->models[get_class($this)]->getsujet_id();
+		if($sujet_id != 0  && $sujet_id != null){
+			$data['reader']['id_sujet'] = $this->models[get_class($this)]->links['Sujets']->getid();
+			$data['reader']['titre_sujet'] = $this->models[get_class($this)]->links['Sujets']->gettitre();
+		}
+		//si il existe un utilisateur
+		$user_id = $this->models[get_class($this)]->getutilisateur_id();
+		if($user_id != 0  && $user_id != null){
+			$data['reader']['id_utilisateur'] = $this->models[get_class($this)]->links['Utilisateurs']->getid();
+			$data['reader']['nom_utilisateur'] = $this->models[get_class($this)]->links['Utilisateurs']->getnom();
+			$data['reader']['prenom_utilisateur'] = $this->models[get_class($this)]->links['Utilisateurs']->getprenom();
+		}
+		//
+		$this->set($data);
+		$this->render('read');
+	}
+
+	function create(){
+		$data = array();
+		if(!empty($_POST)){
+			//setting des datas
+			foreach ($_POST as $key => $value) {
+				$setter = 'set'.$key;
+				$this->models[get_class($this)]->$setter($value);
+			}
+			//creation
+			$result = $this->models[get_class($this)]->create();
+			if($result==1){
+				$data['css'] = ".msg{color:green;}";
+				$data['msg'] = "Le message a bien été créé.";
+			}else{
+				//echec
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "Erreur dans la création du message.";
+			}
+			
+		}
+		//liste selection du sujet
+		$this->loadModel('sujets');
+		$data['create']['select_sujet'] = $this->models['sujets']->listAll();
+		//liste selection de l'utilisateur
+		$this->loadModel('utilisateurs');
+		$data['create']['select_utilisateur'] = $this->models['utilisateurs']->listAll();
+		//
+		$this->set($data);
+		$this->render('create');
+	}
+
+	function update($id){
+		$data = array();
+		$this->loadModel(get_class($this), $id);
+		if(empty($_POST)){
+			//datas remplissage inputs
+			$data['updater']['id'] = $this->models[get_class($this)]->getid();
+			$data['updater']['contenu'] = $this->models[get_class($this)]->getcontenu();
+			$data['updater']['sujet_id'] = $this->models[get_class($this)]->getsujet_id();
+			$data['updater']['utilisateur_id'] = $this->models[get_class($this)]->getutilisateur_id();
+		}else{
+			//setting des datas
+			foreach ($_POST as $key => $value) {
+				$setter = 'set'.$key;
+				$this->models[get_class($this)]->$setter($value);
+			}
+			//modification
+			$result = $this->models[get_class($this)]->update();
+			if($result==1){
+				$data['css'] = ".msg{color:green;}";
+				$data['msg'] = "Le message a bien été modifié.";
+			}else{
+				//si echec
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "Erreur dans la modification du message.";
+			}
+		}
+		//liste selection sujet
+		$this->loadModel('sujets');
+		$data['updater']['select_sujet'] = $this->models['sujets']->listAll();
+		//liste selection utlisateur
+		$this->loadModel('utilisateurs');
+		$data['updater']['select_utilisateur'] = $this->models['utilisateurs']->listAll();
+		//
+		$this->set($data);
+		$this->render('update');
+	}
+
+	function delete($id){
+		$data = array();
+		$this->loadModel(get_class($this), $id);
+		if(empty($_POST)){
+			$data['deleter']['id'] = $this->models[get_class($this)]->getid();
+		}else{
+			//suppression
+			$result = $this->models[get_class($this)]->delete();
+			if($result==1){
+				$data['css'] = ".msg{color:green;}";
+				$data['msg'] = "Le message a bien été supprimé.";
+			}else{
+				//echec
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "Erreur dans la suppression du message.";
+			}
+		}
+		$this->set($data);
+		$this->render('delete');
+
+	}
+
+	
+
+}
+
+
+?>

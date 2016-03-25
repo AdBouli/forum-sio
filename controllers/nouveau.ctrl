@@ -1,0 +1,105 @@
+<?php
+require_once(CORE.'controller.php');
+
+class Nouveau extends Controller{
+
+	function __construct(){
+		//$this->layout = false;
+	}
+
+	function index(){
+		$data = array();
+		$this->set($data);
+		$this->render('index');
+	}
+
+	function message($id_sujet){
+		$data = array();
+		$this->loadModel('sujets', $id_sujet);
+		//récupération datas du sujets
+		$data['sujet']['id'] = $this->models['sujets']->getid();
+		$data['sujet']['titre'] = $this->models['sujets']->gettitre();
+		$data['sujet']['contenu'] = $this->models['sujets']->getcontenu();
+		//vérification utilisateur connecté
+		if(isset($_SESSION['user'])){
+			$data['id_user'] = $_SESSION['user']['id'];
+			$data['pseudo_user'] = $_SESSION['user']['pseudo'];
+		}else{
+			//utilisateur non connécté
+			$link = html::a('connecter', 'href="'.WEBROOT.'session/login"');
+			$data['css'] = ".msg{color:red;}";
+			$data['msg'] = "Vous devez vous $link pour répondre à un sujet.";
+		}
+		if(!empty($_POST)){
+			$this->loadModel('messages');
+			//récupération data du nouveau message
+			$this->models['messages']->setcontenu($_POST['contenu']);
+			$this->models['messages']->setsujet_id($id_sujet);
+			$this->models['messages']->setutilisateur_id($_SESSION['user']['id']);
+			//creation
+			$result = $this->models['messages']->create();
+			if($result==1){
+				$data['css'] = ".msg{color:green;}";
+				$data['msg'] = "Le message a bien été créé.";
+			}else{
+				//echec
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "Erreur dans la création du message.";
+			}
+		}
+		//
+		$this->set($data);
+		$this->render('message');
+	}
+
+	function sujet($id_categ=null){
+		$data = array();
+		$this->loadModel('sujets');
+		$data['id_categ'] = $id_categ;
+		//vérification utilisateur connecté
+		if(isset($_SESSION['user'])){
+			$data['id_user'] = $_SESSION['user']['id'];
+			$data['pseudo_user'] = $_SESSION['user']['pseudo'];
+		}else{
+			//utilisateur non connécté
+			$link = html::a('connecter', 'href="'.WEBROOT.'session/login"');
+			$data['css'] = ".msg{color:red;}";
+			$data['msg'] = "Vous devez vous $link pour soumettre un sujet.";
+		}
+		if(empty($_POST)){
+			$this->loadModel('categories');
+			$data['list_categ'] = $this->models['categories']->listAll();
+		}else{
+			//setting datas
+			$this->models['sujets']->settitre($_POST['titre']);
+			$this->models['sujets']->setcontenu($_POST['contenu']);
+			$this->models['sujets']->setcategorie_id($_POST['categorie_id']);
+			$this->models['sujets']->setutilisateur_id($_SESSION['user']['id']);
+			//refus si nom && catégorie existe
+			if($this->models['sujets']->checkexist()){
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "Le sujet '".$this->models['sujets']->gettitre()."' existe déjà dans cette catégorie.";
+			}else{
+				//création
+				$result = $this->models['sujets']->create();
+				if($result==1){
+					$data['css'] = ".msg{color:green;}";
+					$data['msg'] = "Le sujet ".$this->models['sujets']->gettitre()." a bien été créé.";
+				}else{
+					//echec
+					$data['css'] = ".msg{color:red;}";
+					$data['msg'] = "Erreur dans la création du sujet.";
+				}
+			}
+
+		}
+		//
+		$this->set($data);
+		$this->render('sujet');
+	}
+
+
+}
+
+
+?>

@@ -1,0 +1,182 @@
+<?php
+require_once(CORE.'controller.php');
+
+class Session extends Controller{
+
+	function __construct(){
+		//$this->layout = false;
+	}
+
+	function index(){
+		$data = array();
+		$this->set($data);
+		$this->render('index');
+	}
+
+	function login(){
+		$data = array();
+		$this->loadModel('utilisateurs');
+		if(!empty($_POST)){
+			extract($_POST);
+			$log = $this->models['utilisateurs']->checkUser($login, $password);
+			if($log !=false){
+				$this->loadModel('utilisateurs', $log);
+				$this->models['utilisateurs']->settoken(1);
+				$this->models['utilisateurs']->update();
+				$_SESSION['user'] = array(
+					'id' => $this->models['utilisateurs']->getid(),
+					'pseudo' => $this->models['utilisateurs']->getlogin()
+				);
+				$data['msg'] = "Connection réussie";
+			}else{
+				$data['msg'] = "Echec de la connection";
+			}
+		}
+		$this->set($data);
+		$this->render('login');
+	}
+	
+	function logout(){
+		$data = array();
+		$this->loadModel('utilisateurs', $_SESSION['user']['id']);
+		$this->models['utilisateurs']->settoken(0);
+		$this->models['utilisateurs']->update();
+		unset($_SESSION['user']);
+		$this->set($data);
+		$this->render('logout');
+	}
+
+	function signin(){
+		$data = array();
+		$data['restore'] = array(
+			'nom' => null,
+			'prenom' => null,
+			'dateNaiss' => null,
+			'mail' => null,
+			'login' => null,
+		);
+		$data['checking'] = false;
+		if(!empty($_POST)){
+			$this->loadModel('utilisateurs');
+			//setting datas
+			foreach ($_POST as $key => $value) {
+				$setter = 'set'.$key;
+				//restore contient les datas qui seront réinsérées dans les input si l'inscription à échouée
+				$data['restore'][$key] = $value;
+				if($key == 'password'){
+					$value = md5($value);
+				}
+				if($key != 'password_confirm'){
+					$this->models['utilisateurs']->$setter($value);
+				}
+			}
+			//refus si login existe
+			if($this->models['utilisateurs']->checkloginexist()){
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "L'identifiant '".$this->models['utilisateurs']->getlogin()."' existe déjà.";
+			}else{
+				if($_POST['password']!=$_POST['password_confirm']){
+					$data['css'] = ".msg{color:red;}";
+					$data['msg'] = "Les mots de passes ne correspondent pas.";
+				}else{
+					//creation
+					$result = $this->models['utilisateurs']->create();
+					if($result==1){
+						$data['checking'] = true;
+						$data['css'] = ".msg{}";
+						$link = html::a('ici', 'href="'.WEBROOT.'session/login"');
+						$data['msg'] = "Cliquez $link pour vous connecter :";
+					}else{
+						//echec
+						$data['css'] = ".msg{color:red;}";
+						$data['msg'] = "Une erreur est survenue.";
+					}
+				}
+			}
+		}
+		$data['sexe_list'] = $this->sexelist();
+		$this->set($data);
+		$this->render('signin');
+	}
+
+	function home(){
+		$data = array();
+		//
+		$this->set($data);
+		$this->render('home');
+	}
+
+	function changer_motdepasse(){
+		$data = array();
+		if(!empty($_POST)){
+			$this->loadModel('utilisateurs', $_SESSION['user']['id']);
+			//refus si mauvais ancien mot de passe 
+			if($this->models['utilisateurs']->getpassword() != md5($_POST['old_password'])){
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "Erreur dans la saisie de l'ancien mot de passe.";
+			}else{
+				//refus si nouveaux mots de passes ne correspondent pas
+				if($_POST['password']!=$_POST['password_confirm']){
+					$data['css'] = ".msg{color:red;}";
+					$data['msg'] = "Les mots de passes ne correspondent pas.";
+				}else{
+					//modification
+					$this->models['utilisateurs']->setpassword(md5($_POST['password']));
+					$result = $this->models['utilisateurs']->update();
+					if($result==1){
+						$data['checking'] = true;
+						$data['css'] = ".msg{color:green;}";
+						$data['msg'] = "Votre mot de passe a bien été modifié";
+					}else{
+						//echec
+						$data['css'] = ".msg{color:red;}";
+						$data['msg'] = "Une erreur est survenue.";
+					}
+				}
+			}
+		}
+		//
+		$this->set($data);
+		$this->render('changer_motdepasse');
+	}
+
+	function changer_email(){
+		$data = array();
+		if(!empty($_POST)){
+			$this->loadModel('utilisateurs', $_SESSION['user']['id']);
+			//refus si mauvais mot de passe 
+			if($this->models['utilisateurs']->getpassword() != md5($_POST['password'])){
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "Erreur dans la saisie du mot de passe.";
+			}else{
+				//modification
+				$this->models['utilisateurs']->setmail($_POST['mail']);
+				$result = $this->models['utilisateurs']->update();
+				if($result==1){
+					$data['checking'] = true;
+					$data['css'] = ".msg{color:green;}";
+					$data['msg'] = "Votre adress mail a bien été modifiée";
+				}else{
+					//echec
+					$data['css'] = ".msg{color:red;}";
+					$data['msg'] = "Une erreur est survenue.";
+				}
+			}
+		}
+		//
+		$this->set($data);
+		$this->render('changer_email');
+	}
+
+	function sexelist(){
+		return array(
+			'0' => 'Femme',
+			'1' => 'Homme'
+		);
+	}
+
+
+}
+
+
+?>

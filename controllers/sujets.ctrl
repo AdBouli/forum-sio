@@ -1,0 +1,168 @@
+<?php
+require_once(CORE.'controller.php');
+
+class Sujets extends Controller{
+
+	function __construct(){
+		$this->layout = 'admin';
+		$this->loadModel(get_class($this));
+	}
+
+	function index(){
+		$data = array();
+		$rows = $this->models[get_class($this)]->selectAll();
+		foreach ($rows as $key => $value) {
+			$tmp_sujet = new sujetsModel($value['id']);
+			$rows[$key]['nom_categ'] = $tmp_sujet->getNomCategorie();
+		}
+		$data['admin'] = [
+			'rows' => $rows
+		];
+		$this->set($data);
+		$this->render('index');
+	}
+
+	function read($id){
+		$data = array();
+		$this->loadModel(get_class($this), $id);
+		//datas
+		$data['reader']['id'] = $this->models[get_class($this)]->id;
+		$data['reader']['titre'] = $this->models[get_class($this)]->titre;
+		$data['reader']['contenu'] = $this->models[get_class($this)]->contenu;
+		//si il existe une catégorie
+		$categ_id = $this->models[get_class($this)]->getcategorie_id();
+		if($categ_id != 0  && $categ_id != null){
+			$data['reader']['categorie_id'] = $this->models[get_class($this)]->links['Categories']->getid();
+			$data['reader']['titre_categorie'] = $this->models[get_class($this)]->links['Categories']->getnom();
+		}
+		//si il existe un utilisateur
+		$user_id = $this->models[get_class($this)]->getutilisateur_id();
+		if($user_id != 0  && $user_id != null){
+			$data['reader']['utilisateur_id'] = $this->models[get_class($this)]->links['Utilisateurs']->getid();
+			$data['reader']['nom_utilisateur'] = $this->models[get_class($this)]->links['Utilisateurs']->getnom();
+			$data['reader']['prenom_utilisateur'] = $this->models[get_class($this)]->links['Utilisateurs']->getprenom();
+		}
+		//recuperation du dernier message posté
+		$data['reader']['last_msg'] = $this->models[get_class($this)]->getlastmsg();
+		if($data['reader']['last_msg']!=false && $data['reader']['last_msg']['utilisateur_id']!=0){
+			$user = new UtilisateursModel($data['reader']['last_msg']['utilisateur_id']);
+			$data['reader']['nom_utilisateur_last_msg'] = $user->getnom();
+			$data['reader']['prenom_utilisateur_last_msg'] = $user->getprenom();
+		}
+		//formatage date et heure
+		$data['reader']['date_created_last_msg'] = $this->formatdate($data['reader']['last_msg']['created']);
+		$data['reader']['heure_created_last_msg'] = $this->formatheure($data['reader']['last_msg']['created']);
+		//
+		$this->set($data);
+		$this->render('read');
+	}
+
+	function create(){
+		$date = array();
+		if(!empty($_POST)){
+			//setting des datas
+			foreach ($_POST as $key => $value) {
+				$setter = 'set'.$key;
+				$this->models[get_class($this)]->$setter($value);
+			}
+			//refus si nom && catégorie existe
+			if($this->models[get_class($this)]->checkexist()){
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "Le sujet '".$this->models[get_class($this)]->gettitre()."' existe déjà dans cette catégorie.";
+			}else{
+				//creation
+				$result = $this->models[get_class($this)]->create();
+				if($result==1){
+					$data['css'] = ".msg{color:green;}";
+					$data['msg'] = "Le sujet '".$this->models[get_class($this)]->gettitre()."' a bien été créée.";
+				}else{
+					//echec
+					$data['css'] = ".msg{color:red;}";
+					$data['msg'] = "Erreur dans la création de le sujet.";
+				}
+			}
+		}
+		//liste selection de catégorie
+		$this->loadModel('Categories');
+		$data['create']['select_categorie'] = $this->models['Categories']->listAll();
+		//liste selection ustilisateur
+		$this->loadModel('Utilisateurs');
+		$data['create']['select_utilisateur'] = $this->models['Utilisateurs']->listAll();
+		//
+		$this->set($data);
+		$this->render('create');
+	}
+
+	function update($id){
+		$date = array();
+		$this->loadModel(get_class($this), $id);
+		if(empty($_POST)){
+			//datas remplissage inputs
+			$data['updater']['id'] = $this->models[get_class($this)]->getid();
+			$data['updater']['titre'] = $this->models[get_class($this)]->gettitre();
+			$data['updater']['contenu'] = $this->models[get_class($this)]->getcontenu();
+			$data['updater']['categorie_id'] = $this->models[get_class($this)]->getcategorie_id();
+			$data['updater']['utilisateur_id'] = $this->models[get_class($this)]->getutilisateur_id();
+			//liste selection de catégorie
+			$this->loadModel('Categories');
+			$data['updater']['select_categorie'] = $this->models['Categories']->listAll();
+			//liste selection ustilisateur
+			$this->loadModel('Utilisateurs');
+			$data['updater']['select_utilisateur'] = $this->models['Utilisateurs']->listAll();
+		}else{
+			//setting des datas
+			foreach ($_POST as $key => $value) {
+				$setter = 'set'.$key;
+				$this->models[get_class($this)]->$setter($value);
+			}
+			//refus si nom && catégorie parent existe
+			if($this->models[get_class($this)]->checkexist()){
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "Le sujet '".$this->models[get_class($this)]->gettitre()."' existe déjà dans cette catégorie.";
+			}else{
+				//modificationmodification
+				$result = $this->models[get_class($this)]->update();
+				if($result==1){
+					$data['css'] = ".msg{color:green;}";
+					$data['msg'] = "Le sujet '".$this->models[get_class($this)]->gettitre()."' a bien été modifié.";
+				}else{
+					//si echec
+					$data['css'] = ".msg{color:red;}";
+					$data['msg'] = "Erreur dans la modification du sujet.";
+				}
+			}
+		}
+		//
+		$this->set($data);
+		$this->render('update');
+
+	}
+
+	function delete($id){
+		$data = array();
+		$this->loadModel(get_class($this), $id);
+		if(empty($_POST)){
+			$data['deleter']['id'] = $this->models[get_class($this)]->getid();
+			$data['deleter']['titre'] = $this->models[get_class($this)]->gettitre();
+		}else{
+			//suppression
+			$result = $this->models[get_class($this)]->delete();
+			if($result==1){
+				$data['css'] = ".msg{color:green;}";
+				$data['msg'] = "Le sujet '".$this->models[get_class($this)]->gettitre()."' a bien été supprimé.";
+			}else{
+				//echec
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "Erreur dans la suppression du sujet.";
+			}
+		}
+		$this->set($data);
+		$this->render('delete');
+	}
+
+	
+
+}
+
+
+?>

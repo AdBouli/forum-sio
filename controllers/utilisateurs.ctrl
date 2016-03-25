@@ -1,0 +1,149 @@
+<?php
+require_once(CORE.'controller.php');
+
+class Utilisateurs extends Controller{
+
+	function __construct(){
+		$this->layout = 'admin';
+		$this->loadModel(get_class($this));
+	}
+
+	function index(){
+		$data = array();
+		$rows = $this->models[get_class($this)]->selectAll();
+		$data['admin'] = [
+			'rows' => $rows
+		];
+		$this->set($data);
+		$this->render('index');
+
+	}
+
+	function read($id){
+		$data = array();
+		$this->loadModel(get_class($this), $id);
+		$data['reader']['id'] = $this->models[get_class($this)]->getid();
+		$data['reader']['nom'] = $this->models[get_class($this)]->getnom();
+		$data['reader']['prenom'] = $this->models[get_class($this)]->getprenom();
+		$data['reader']['sexe'] = $this->models[get_class($this)]->_getsexe();
+		$data['reader']['mail'] = $this->models[get_class($this)]->getmail();
+		$data['reader']['login'] = $this->models[get_class($this)]->getlogin();
+		//datas stats
+		$data['reader']['nbposts'] = $this->models[get_class($this)]->getnbsujets();
+		$data['reader']['nbmsgs'] = $this->models[get_class($this)]->getnbmsgs();
+		$this->set($data);
+		$this->render('read');
+	}
+
+	function create(){
+		$data = array();
+		if(!empty($_POST)){
+			$this->loadModel(get_class($this));
+			//setting des datas
+			foreach ($_POST as $key => $value) {
+				$setter = 'set'.$key;
+				if($key == 'password'){
+					$value = md5($value);
+				}
+				$this->models[get_class($this)]->$setter($value);
+			}
+			//refus si login existe
+			if($this->models[get_class($this)]->checkloginexist()){
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "L'identifiant '".$this->models[get_class($this)]->getlogin()."' existe déjà.";
+			}else{
+				//creation
+				$result = $this->models[get_class($this)]->create();
+				if($result==1){
+					$data['css'] = ".msg{color:green;}";
+					$data['msg'] = "L'utilisateur '".$this->models[get_class($this)]->getlogin()."' a bien été créé.";
+				}else{
+					//echec
+					$data['css'] = ".msg{color:red;}";
+					$data['msg'] = "Erreur dans la création de l'utilisateur.";
+				}
+			}
+		}
+		$data['sexe_list'] = $this->sexelist();
+		$this->set($data);
+		$this->render('create');
+	}
+
+	
+
+	function update($id){
+		$data = array();
+		$this->loadModel(get_class($this), $id);
+		if(empty($_POST)){
+			//datas remplissage inputs
+			$data['updater']['id'] = $this->models[get_class($this)]->getid();
+			$data['updater']['nom'] = $this->models[get_class($this)]->getnom();
+			$data['updater']['prenom'] = $this->models[get_class($this)]->getprenom();
+			$data['updater']['sexe'] = $this->models[get_class($this)]->getsexe();
+			$data['updater']['dateNaiss'] = $this->models[get_class($this)]->getdateNaiss();
+			$data['updater']['mail'] = $this->models[get_class($this)]->getmail();
+			$data['updater']['login'] = $this->models[get_class($this)]->getlogin();
+		}else{
+			//setting des datas
+			foreach ($_POST as $key => $value) {
+				$setter = 'set'.$key;
+				$this->models[get_class($this)]->$setter($value);
+			}
+			//refus si login existe
+			if($this->models[get_class($this)]->checkloginexist()){
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "L'identifiant '".$this->models[get_class($this)]->getlogin()."' existe déjà.";
+			}else{
+				//creation
+				$result = $this->models[get_class($this)]->update();
+				if($result==1){
+					$data['css'] = ".msg{color:green;}";
+					$data['msg'] = "L'utilisateur '".$this->models[get_class($this)]->getlogin()."' a bien été modifié.";
+				}else{
+					//echec
+					$data['css'] = ".msg{color:red;}";
+					$data['msg'] = "Erreur dans la modification de l'utilisateur.";
+				}
+			}
+		}
+		$data['sexe_list'] = $this->sexelist();
+		$this->set($data);
+		$this->render('update');
+	}
+
+	function delete($id){
+		$data = array();
+		$this->loadModel(get_class($this), $id);
+		if(empty($_POST)){
+			$data['deleter']['id'] = $this->models[get_class($this)]->getid();
+			$data['deleter']['nom'] = $this->models[get_class($this)]->getnom();
+			$data['deleter']['prenom'] = $this->models[get_class($this)]->getprenom();
+		}else{
+			//suppression
+			$result = $this->models[get_class($this)]->delete();
+			if($result==1){
+				$data['css'] = ".msg{color:green;}";
+				$data['msg'] = "L'utilisateur '".$this->models[get_class($this)]->getlogin()."' a bien été supprimé.";
+			}else{
+				//echec
+				$data['css'] = ".msg{color:red;}";
+				$data['msg'] = "Erreur dans la suppression de l'utilisateur.";
+			}
+		}
+		$this->set($data);
+		$this->render('delete');
+	}
+
+	function sexelist(){
+		return array(
+			'0' => 'Femme',
+			'1' => 'Homme'
+		);
+	}
+
+	
+
+}
+
+
+?>

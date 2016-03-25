@@ -1,0 +1,125 @@
+<?php
+require_once(CORE.'controller.php');
+
+class Home extends Controller{
+
+	function __construct(){
+		//$this->layout = false;
+	}
+
+	function index(){
+		$data = array();
+		$data['home'] = [
+			'titre' => 'Bienvenue sur le forum Services Informatiques aux organisations.',
+			'help' => 'Cliquez sur un sujet('.html::img('src="'.IMG.'post.ico" height="16" width="16"').') ou une catégorie ('.html::img('src="'.IMG.'category.ico" height="16" width="16"').') pour en afficher son contenu.'
+		];
+		$this->loadModel('categories');
+		$this->loadModel('sujets');
+		//catégories principales
+		$data['main_categ'] = $this->models['categories']->getMainCategories();
+		foreach ($data['main_categ'] as $key => $value) {
+			$tmp_main_categ = new categoriesModel($value['id']);
+			$data['main_categ'][$key] = array(
+				'id' => $tmp_main_categ->getid(),
+				'nom' => $tmp_main_categ->getnom(),
+				'nb_sujets' => $tmp_main_categ->getNbSujets()
+			);
+			//sous catégories
+			$data['main_categ'][$key]['categ_filles'] = $tmp_main_categ->getGrandesSousCategories(3);
+			foreach ($data['main_categ'][$key]['categ_filles'] as $key2 => $value2) {
+				$tmp_sous_categ = new categoriesModel($value2);
+				$data['main_categ'][$key]['categ_filles'][$key2] = array(
+					'id' => $tmp_sous_categ->getid(),
+					'nom' => $tmp_sous_categ->getnom(),
+					'nb_sujets' => $tmp_sous_categ->getNbSujets()
+				);
+			}
+			//derniers sujets
+			$data['main_categ'][$key]['sujets_fils'] = $tmp_main_categ->getLastPosts(3);
+			foreach ($data['main_categ'][$key]['sujets_fils'] as $key2 => $value2) {
+				$tmp_sous_sujet = new sujetsModel($value2);
+				$data['main_categ'][$key]['sujets_fils'][$key2] = array(
+					'id' => $tmp_sous_sujet->getid(),
+					'titre' => $tmp_sous_sujet->gettitre(),
+					'pseudo' => $tmp_sous_sujet->getPseudo(),
+					'creation' => 'le '.$this->formatDate($tmp_sous_sujet->getcreated()).' à '.$this->formatHeure($tmp_sous_sujet->getcreated()),
+					'nbMessages' => $tmp_sous_sujet->getNbMessages().' réponses'
+				);
+			}
+		}
+		//
+		$this->set($data);
+		$this->render('index');
+	}
+
+	function categorie($id){
+		$data = array();
+		$this->loadModel('categories', $id);
+		//chemin
+		$data['chemin'] = array_reverse($this->models['categories']->getChemin(), true);
+		$data['chemin'][$id] = $this->models['categories']->getnom();
+		$data['id_categ'] = $id;
+		//sous catégories
+		$data['sous_categ'] = $this->models['categories']->getGrandesSousCategories();
+		foreach ($data['sous_categ'] as $key => $value) {
+			$tmp_sous_categ = new categoriesModel($value);
+			$data['sous_categ'][$key] = array(
+				'id' => $tmp_sous_categ->getid(),
+				'nom' => $tmp_sous_categ->getnom(),
+				'nb_sujets' => $tmp_sous_categ->getNbSujets()
+			);
+		}
+		//sous sujets
+		require_once(MODL.'sujets.mdl');
+		$data['sous_sujet'] = $this->models['categories']->getLastPosts();
+		foreach ($data['sous_sujet'] as $key => $value) {
+			$tmp_sous_sujet = new sujetsModel($value);
+			$data['sous_sujet'][$key] = array(
+				'id' => $tmp_sous_sujet->getid(),
+				'titre' => $tmp_sous_sujet->gettitre(),
+				'pseudo' => $tmp_sous_sujet->getPseudo(),
+				'creation' => 'le '.$this->formatDate($tmp_sous_sujet->getcreated()).' à '.$this->formatHeure($tmp_sous_sujet->getcreated())
+			);
+		}
+		//
+		$this->set($data);
+		$this->render('categorie');
+	}
+
+	function sujet($id){
+		$data = array();
+		$this->loadModel('sujets', $id);
+		//chemin
+		$data['chemin'] = array_reverse($this->models['sujets']->getChemin(), true);
+		//récupération des données
+		$data['sujet']['id'] = $this->models['sujets']->getid();
+		$data['sujet']['titre'] = $this->models['sujets']->gettitre();
+		$data['sujet']['contenu'] = $this->models['sujets']->getcontenu();
+		$data['sujet']['id_auteur'] = $this->models['sujets']->getutilisateur_id();
+		$data['sujet']['pseudo'] = $this->models['sujets']->getPseudo();
+		$data['sujet']['creation'] = 'le '.$this->formatDate($this->models['sujets']->getcreated()).' à '.$this->formatHeure($this->models['sujets']->getcreated());
+		$data['sujet']['nb_msg'] = $this->models['sujets']->getNbMessages();
+		//messages
+		require_once(MODL.'messages.mdl');
+		$data['msg'] = $this->models['sujets']->messages;
+		foreach ($data['msg'] as $key => $value) {
+			$tmp_msg = new messagesModel($value);
+			$data['msg'][$key] = array(
+				'id' => $tmp_msg->getid(),
+				'contenu' => $tmp_msg->getcontenu(),
+				'id_auteur' => $tmp_msg->getutilisateur_id(),
+				'pseudo' => $tmp_msg->getPseudo(),
+				'creation' => 'le '.$this->formatDate($tmp_msg->getcreated()).' à '.$this->formatHeure($tmp_msg->getcreated())
+			);
+		}
+		//
+		$this->set($data);
+		$this->render('sujet');
+
+	}
+
+	
+}
+
+
+?>

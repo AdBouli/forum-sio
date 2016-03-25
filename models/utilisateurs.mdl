@@ -1,0 +1,136 @@
+﻿<?php
+require_once(CORE.'model.php');
+
+class UtilisateursModel extends Model{
+	
+	//Attributs
+	protected $id;
+	protected $nom;
+	protected $prenom;
+	protected $sexe;
+	protected $dateNaiss;
+	protected $mail;
+	protected $login;
+	protected $password;
+	protected $token;
+	protected $created;
+	protected $updated;
+
+	//Méthodes
+
+	//Constructeur
+	public function __construct($id = null){
+		//nom de la table dans la base de donnée
+		$this->table = "utilisateurs";
+		//description des liens de cette table
+		$this->fkey = [
+			//clé étrangère => table référence
+		];
+		$this->default = "nom ASC";
+		//lecture des données
+		if($id!=null){
+			$this->read($id);
+			foreach ($this->fkey as $fkey => $table) {
+				if($this->$fkey!=null && $this->$fkey!=0){
+					require_once(MODL.$table.'.mdl');
+					$class = $table.'Model';
+					$this->links[$table] = new $class($this->$fkey);
+				}
+			}
+		}
+	}
+
+	//Getters
+	public function getid(){return $this->id;}
+	public function getnom(){return $this->nom;}
+	public function getprenom(){return $this->prenom;}
+	public function getsexe(){return $this->sexe;}
+	public function getdateNaiss(){return $this->dateNaiss;}
+	public function getmail(){return $this->mail;}
+	public function getlogin(){return $this->login;}
+	public function getpassword(){return $this->password;}
+	public function gettoken(){return $this->token;}
+	public function getcreated(){return $this->created;}
+	public function getupdated(){return $this->updated;}
+	//Setters
+	public function setid($val){$this->id = $val;}
+	public function setnom($val){$this->nom = $val;}
+	public function setprenom($val){$this->prenom = $val;}
+	public function setsexe($val){$this->sexe = $val;}
+	public function setdateNaiss($val){$this->dateNaiss = $val;}
+	public function setmail($val){$this->mail = $val;}
+	public function setlogin($val){$this->login = $val;}
+	public function setpassword($val){$this->password = $val;}
+	public function settoken($val){$this->token = $val;}
+	public function setcreated($val){$this->created = $val;}
+	public function setupdated($val){$this->updated = $val;}
+
+	public function _getsexe(){
+		$ret = '';
+		if($this->sexe==0){
+			$ret = 'femme';
+		}else{
+			$ret = 'homme';
+		}
+		return $ret;
+	}
+
+	public function getnbsujets(){
+		$id = $this->getid();
+		$res = $this->select("SELECT count(*)'nb' from sujets where utilisateur_id = $id");
+		return $res[0]['nb'];
+	}
+
+	public function getnbmsgs(){
+		$id = $this->getid();
+		$res = $this->select("SELECT count(*)'nb' from messages where utilisateur_id = $id");
+		return $res[0]['nb'];
+	}
+
+	public function checkloginexist($login = null){
+		if($login == null){
+			$login = $this->login;
+		}
+		$res = $this->select("SELECT * from utilisateurs where login = '$login'");
+		if(empty($res)){
+			$res = false;
+		}else{
+			if(isset($this->id)){
+				if($res[0]['id']==$this->id){
+					$res = false;
+				}else{
+					$res = true;
+				}
+			}else{
+				$res = true;
+			}
+		}
+		return $res;
+		
+	}
+
+
+	public function listAll(){
+		$all = $this->selectAll();
+		$data[null] = 'Utilisateur';
+		foreach ($all as $key => $value) {
+			$data[$value['id']] = $value['prenom'].' '.$value['nom'];
+		}
+		return $data;
+	}
+
+	public function checkUser($login, $password){
+		$password_compare = $this->select("SELECT id, password from utilisateurs where login = '$login' or mail = '$login'");
+		if(md5($password)==$password_compare[0]['password']){
+			$return = $password_compare[0]['id'];
+		}else{
+			$return = false;
+		}
+		return $return;
+	}
+
+
+
+}
+
+?>

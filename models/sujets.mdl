@@ -1,0 +1,171 @@
+<?php
+require_once(CORE.'model.php');
+
+class SujetsModel extends Model{
+	
+	//Attributs
+	protected $id;
+	protected $titre;
+	protected $contenu;
+	protected $categorie_id;
+	protected $utilisateur_id;
+	protected $created;
+	protected $updated;
+	protected $messages = array();
+
+	//Méthodes
+
+	//Constructeur
+	public function __construct($id = null){
+		//nom de la table dans la base de donnée
+		$this->table = "sujets";
+		//description des liens de cette table
+		$this->fkey = [
+			//clé étrangère => table référence
+			'utilisateur_id' => 'Utilisateurs',
+			'categorie_id' => 'Categories'
+		];
+		//arraysis
+		$this->arraysis[] = 'messages';
+		//Order by
+		$this->default = "titre ASC";
+		//lecture des données
+		if($id!=null){
+			$this->read($id);
+			foreach ($this->fkey as $fkey => $table) {
+				if($this->$fkey!=null && $this->$fkey!=0){
+					require_once(MODL.$table.'.mdl');
+					$class = $table.'Model';
+					$this->links[$table] = new $class($this->$fkey);
+				}
+			}
+			//messages enfants
+			$msg_fils = $this->select("SELECT id from messages where sujet_id = '$id' order by created ASC");
+			foreach ($msg_fils as $key => $value) {
+				$this->messages[] = $value['id'];
+			}
+		}
+
+	}
+
+	//Getters
+	public function getid(){return $this->id;}
+	public function gettitre(){return $this->titre;}
+	public function getcontenu(){return $this->contenu;}
+	public function getutilisateur_id(){return $this->utilisateur_id;}
+	public function getcategorie_id(){return $this->categorie_id;}
+	public function getcreated(){return $this->created;}
+	public function getupdated(){return $this->updated;}
+	//Setters
+	public function setid($val){$this->id = $val;}
+	public function settitre($val){$this->titre = $val;}
+	public function setcontenu($val){$this->contenu = $val;}
+	public function setutilisateur_id($val){$this->utilisateur_id = $val;}
+	public function setcategorie_id($val){$this->categorie_id = $val;}
+	public function setcreated($val){$this->created = $val;}
+	public function setupdated($val){$this->updated = $val;}
+
+	public function getMessagesEnfants(){
+		$res = array();
+		foreach ($this->messages as $value) {
+			$res[] = new messagesModel($value);
+		}
+		return $res;
+	}
+
+	public function getNomCategorie(){
+		return $this->links['Categories']->getnom();
+	}
+
+	public function getLastPosts($limit){
+		$res = $this->select("SELECT id from sujets order by created DESC limit ".$limit);
+		$last_posts = array();
+		foreach ($res as $key => $value) {
+			$tmp_sujet = new sujetsModel($value['id']);
+			$last_posts[$key] = array(
+				'id' => $tmp_sujet->getid(),
+				'titre' => $tmp_sujet->gettitre(),
+				'categorie' => $tmp_sujet->getNomCategorie()
+			);
+		}
+		return $last_posts;
+	}
+
+	public function getlastmsg(){
+		$res = $this->select("SELECT * from messages where sujet_id = ".$this->id." Order by created DESC");
+		if(empty($res)){
+			$res[0] = false;
+		}
+		return $res[0];
+	}
+
+	public function checkexist($titre = null, $categorie = null){
+		if($titre == null){
+			$titre = $this->titre;
+		}
+		if($categorie == null){
+			$categorie = $this->categorie_id;
+		}
+		$res = $this->select("SELECT * from sujets where titre = '".$titre."' and categorie_id = '".$categorie."'");
+		if(empty($res)){
+			$res = false;
+		}else{
+			if(isset($this->id)){
+				if($res[0]['id']==$this->id){
+					$res = false;
+				}else{
+					$res = true;
+				}
+			}else{
+				$res = true;
+			}
+		}
+		return $res;
+	}
+
+	public function getNbMessages($id = null){
+		if($id == null){
+			$id = $this->id;
+		}
+		return count($this->select("SELECT id from messages where sujet_id = '$id'"));
+	}
+
+	public function listAll(){
+		$all = $this->selectAll();
+		$data[null] = 'Sujet';
+		foreach ($all as $key => $value) {
+			$data[$value['id']] = $value['titre'];
+		}
+		return $data;
+	}
+
+	public function getPseudo(){
+		$res = $this->select("SELECT login from utilisateurs where id = '".$this->utilisateur_id."'");
+		if(empty($res)){
+			$res[0] = false;
+		}
+		return $res[0]['login'];	
+	}
+
+	public function getChemin($id_categ = null, $chemin = null){
+		if($id_categ == null){
+			$id_categ = $this->id;
+			$tmp = new sujetsModel($id_categ);
+		}else{
+			require_once(MODL.'categories.mdl');
+			$tmp = new categoriesModel($id_categ);
+		}
+		if($chemin == null){
+			$chemin = array();
+		}
+		//si il y a un parent
+		if(!empty($tmp->links['Categories'])){
+			$chemin[$tmp->links['Categories']->id] = $tmp->links['Categories']->nom;
+			$chemin = $tmp->getChemin($tmp->categorie_id, $chemin);
+		}
+		return $chemin;
+	}
+
+}
+
+?>

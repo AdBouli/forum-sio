@@ -1,0 +1,67 @@
+<?php
+require_once(CORE.'model.php');
+
+class MessagesModel extends Model{
+	
+	//Attributs
+	protected $id;
+	protected $contenu;
+	protected $sujet_id;
+	protected $utilisateur_id;
+	protected $created;
+	protected $updated;
+
+	//Méthodes
+
+	//Constructeur
+	public function __construct($id = null){
+		//nom de la table dans la base de donnée
+		$this->table = "messages";
+		//description des liens de cette table
+		$this->fkey = [
+			//clé étrangère => table référence
+			'sujet_id' => 'Sujets',
+			'utilisateur_id' => 'Utilisateurs'
+		];
+		//Order by
+		$this->default = "created DESC";
+		//lecture des données
+		if($id!=null){
+			$this->read($id);
+			foreach ($this->fkey as $fkey => $table) {
+				if($this->$fkey!=null && $this->$fkey!=0){
+					require_once(MODL.$table.'.mdl');
+					$class = $table.'Model';
+					$this->links[$table] = new $class($this->$fkey);
+				}
+			}
+		}
+	}
+
+	//Getters
+	public function getid(){return $this->id;}
+	public function getcontenu(){return $this->contenu;}
+	public function getsujet_id(){return $this->sujet_id;}
+	public function getutilisateur_id(){return $this->utilisateur_id;}
+	public function getcreated(){return $this->created;}
+	public function getupdated(){return $this->updated;}
+	//Setters
+	public function setid($val){$this->id = $val;}
+	public function setcontenu($val){$this->contenu = $val;}
+	public function setsujet_id($val){$this->sujet_id = $val;}
+	public function setutilisateur_id($val){$this->utilisateur_id = $val;}
+	public function setcreated($val){$this->created = $val;}
+	public function setupdated($val){$this->updated = $val;}
+
+	public function getPseudo(){
+		$res = $this->select("SELECT login from utilisateurs where id = '".$this->utilisateur_id."'");
+		if(empty($res)){
+			$res[0] = false;
+		}
+		return $res[0]['login'];	
+	}
+
+
+}
+
+?>

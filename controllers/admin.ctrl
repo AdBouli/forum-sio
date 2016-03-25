@@ -1,0 +1,32 @@
+<?php
+require_once(CORE.'controller.php');
+
+class Admin extends Controller{
+
+	function __construct(){
+		$this->layout = 'admin';
+	}
+
+	function index(){
+		$data = array();
+		$this->loadModel('utilisateurs', $_SESSION['user']['id']);
+		//nombre de sujets
+		$data['general']['nb_sujets'] = $this->models['utilisateurs']->select("SELECT count(*)'nb' from sujets")[0]['nb'];
+		//nombre de messages
+		$data['general']['nb_msg'] = $this->models['utilisateurs']->select("SELECT count(*)'nb' from messages")[0]['nb'];
+		//nombre de catégories
+		$data['general']['nb_categ'] = $this->models['utilisateurs']->select("SELECT count(*)'nb' from categories")[0]['nb'];
+		//nombre d'utilisateurs
+		$data['general']['nb_users'] = $this->models['utilisateurs']->select("SELECT count(*)'nb' from utilisateurs")[0]['nb'];
+		//nombre d'utilisateurs en ligne
+		$data['general']['nb_users_online'] = $this->models['utilisateurs']->select("SELECT count(*)'nb' from utilisateurs where token='1'")[0]['nb'];
+		//
+		$this->set($data);
+		$this->render('index');
+	}
+
+
+}
+
+
+?>

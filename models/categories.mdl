@@ -1,0 +1,201 @@
+<?php
+require_once(CORE.'model.php');
+
+class CategoriesModel extends Model{
+	
+	//Attributs
+	protected $id;
+	protected $nom;
+	protected $description;
+	protected $categorie_id;
+	protected $classement;
+	protected $created;
+	protected $updated;
+	protected $categories = array();
+	protected $sujets = array();
+
+	//Méthodes
+
+	//Constructeur
+	public function __construct($id = null){
+		//nom de la table dans la base de donnée
+		$this->table = "categories";
+		//description des liens de cette table
+		$this->fkey = [
+			//clé étrangère => table référence
+			'categorie_id' => 'Categories'
+		];
+		//arraysis
+		$this->arraysis[] = 'categories';
+		$this->arraysis[] = 'sujets';
+		//Order by
+		$this->default = "classement ASC";
+		//
+		//lecture des données
+		if($id!=null){
+			$this->read($id);
+			//chargement des liens
+			foreach ($this->fkey as $fkey => $table) {
+				if($this->$fkey!=null && $this->$fkey!=0){
+					require_once(MODL.$table.'.mdl');
+					$class = $table.'Model';
+					$this->links[$table] = new $class($this->$fkey);
+				}
+			}
+			//catégories enfants
+			$categories_filles = $this->select("SELECT id from categories where categorie_id = '$id'");
+			foreach ($categories_filles as $key => $value) {
+				$this->categories[] = $value['id'];
+			}
+			//sujets enfants
+			$sujets_fils = $this->select("SELECT id from sujets where categorie_id = '$id'");
+			foreach ($sujets_fils as $key => $value) {
+				$this->sujets[] = $value['id'];
+			}
+		}
+	}
+
+	//Getters
+	public function getid(){return $this->id;}
+	public function getnom(){return $this->nom;}
+	public function getdescription(){return $this->description;}
+	public function getcategorie_id(){return $this->categorie_id;}
+	public function getclassement(){return $this->classement;}
+	public function getcreated(){return $this->created;}
+	public function getupdated(){return $this->updated;}
+	//Setters
+	public function setid($val){$this->id = $val;}
+	public function setnom($val){$this->nom = $val;}
+	public function setdescription($val){$this->description = $val;}
+	public function setcategorie_id($val){$this->categorie_id = $val;}
+	public function setclassement($val){$this->classement = $val;}
+	public function setcreated($val){$this->created = $val;}
+	public function setupdated($val){$this->updated = $val;}
+
+	public function getCategoriesEnfants(){
+		$res = array();
+		foreach ($this->categories as $value) {
+			$res[] = new categoriesModel($value);
+		}
+		return $res;
+	}
+
+	public function getSujetsEnfants(){
+		$res = array();
+		require_once(MODL.'sujets.mdl');
+		foreach ($this->sujets as $value) {
+			$res[] = new sujetsModel($value);
+		}
+		return $res;
+	}
+
+	public function checkNomExist($nom = null, $categorie_parent = null){
+		if($nom == null){
+			$nom = $this->nom;
+		}
+		if($categorie_parent == null){
+			$categorie_parent = $this->categorie_id;
+		}
+		$res = $this->select("SELECT * from categorie where nom = '$nom' and categorie_id = '$categorie_parent'");
+		if(empty($res)){
+			$res = false;
+		}else{
+			if(isset($this->id)){
+				if($res[0]['id']==$this->id){
+					$res = false;
+				}else{
+					$res = true;
+				}
+			}else{
+				$res = true;
+			}
+		}
+		return $res;
+	}
+
+	public function listAll(){
+		$all = $this->select("SELECT * from categories order by nom ASC");
+		$data[null] = "Catégorie";
+		foreach ($all as $key => $value) {
+			$data[$value['id']] = $value['nom'];
+		}
+		return $data;
+	}
+
+	public function getMainCategories(){
+		return $this->select("SELECT id from categories where categorie_id = '0' order by classement ASC");
+	}
+
+	public function getGrandesSousCategories($limit = 0){
+		$return = array();
+		$categories = $this->getCategoriesEnfants();
+		if($limit == 0){
+			$limit = count($categories);
+		}
+		for($i=0; $i<$limit; $i++){
+			$nb_sujets_max = 0;
+			foreach ($categories as $key => $categorie_enfant) {
+				$test_nb_sujets_max = $categorie_enfant->getNbSujets();
+				if($test_nb_sujets_max >= $nb_sujets_max){
+					$nb_sujets_max = $test_nb_sujets_max;
+					$delete = $key;
+				}
+			}
+			if(isset($delete)){
+				$return[] = $categories[$delete]->getid();
+				unset($categories[$delete]);
+			}
+		}
+		return $return;
+	}
+
+	public function getLastPosts($limit = 0){
+		$last_posts = array();
+		if($limit==0){
+			$limit = '';
+		}else{
+			$limit = 'limit '.$limit;
+		}
+		$sujets = $this->select("SELECT id from sujets where categorie_id = '".$this->id."' order by created DESC ".$limit);
+		foreach ($sujets as $key => $value) {
+			$last_posts[] = $value['id'];
+		}
+		return $last_posts;
+	}
+
+
+	public function getNbSujets($id_categ = null, $count = 0){
+		if($id_categ==null){
+			$id_categ = $this->getid();
+		}
+		//compte le nombre de sujet dans la catégorie
+		$count = count($this->select("SELECT id from sujets where categorie_id = '$id_categ'"));
+		//recupération des catégorie fille
+		$res = $this->select("SELECT id from categories where categorie_id = '$id_categ'");
+		//compte le nombre de sujet pour chaque catégorie fille
+		foreach ($res as $key => $value) {
+			$count += $this->getNbSujets($value['id'], $count);
+		}
+		return $count;
+	}
+
+	public function getChemin($id_categ = null, $chemin = null){
+		if($id_categ == null){
+			$id_categ = $this->id;
+		}
+		if($chemin == null){
+			$chemin = array();
+		}
+		$tmp_categ = new categoriesModel($id_categ);
+		//si il y a un parent
+		if(!empty($tmp_categ->links['Categories'])){
+			$chemin[$tmp_categ->links['Categories']->id] = $tmp_categ->links['Categories']->nom;
+			$chemin = $tmp_categ->getChemin($tmp_categ->categorie_id, $chemin);
+		}
+		return $chemin;
+	}
+
+
+}
+
+?>
