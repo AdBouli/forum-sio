@@ -23,7 +23,7 @@ class CategoriesModel extends Model{
 		//description des liens de cette table
 		$this->fkey = [
 			//clé étrangère => table référence
-			'categorie_id' => 'Categories'
+			'categorie_id' => 'categories'
 		];
 		//arraysis
 		$this->arraysis[] = 'categories';

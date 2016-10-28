@@ -22,8 +22,8 @@ class SujetsModel extends Model{
 		//description des liens de cette table
 		$this->fkey = [
 			//clé étrangère => table référence
-			'utilisateur_id' => 'Utilisateurs',
-			'categorie_id' => 'Categories'
+			'utilisateur_id' => 'utilisateurs',
+			'categorie_id' => 'categories'
 		];
 		//arraysis
 		$this->arraysis[] = 'messages';
@@ -74,7 +74,7 @@ class SujetsModel extends Model{
 	}
 
 	public function getNomCategorie(){
-		return $this->links['Categories']->getnom();
+		return $this->links['categories']->getnom();
 	}
 
 	public function getLastPosts($limit){

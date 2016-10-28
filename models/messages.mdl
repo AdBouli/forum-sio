@@ -20,8 +20,8 @@ class MessagesModel extends Model{
 		//description des liens de cette table
 		$this->fkey = [
 			//clé étrangère => table référence
-			'sujet_id' => 'Sujets',
-			'utilisateur_id' => 'Utilisateurs'
+			'sujet_id' => 'sujets',
+			'utilisateur_id' => 'utilisateurs'
 		];
 		//Order by
 		$this->default = "created DESC";

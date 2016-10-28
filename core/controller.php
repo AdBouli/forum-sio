@@ -14,7 +14,7 @@ class Controller {
 	}
 
 	function render($filename){
-		$view = VIEW.get_class($this).'/'.$filename.'.tpl';
+		$view = VIEW.strtolower(get_class($this)).'/'.$filename.'.tpl';
 		if(file_exists($view)){
 			extract($this->vars);
 			ob_start();
